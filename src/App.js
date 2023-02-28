@@ -1,7 +1,8 @@
 import { Editor } from '@tinymce/tinymce-react';
 import { useRef } from 'react';
-
+import axios from 'axios';
 import $ from 'jquery';
+import SpeechToText from './Component/SpeechToText';
 // Load wiris formula render script.
 const jsDemoImagesTransform = document.createElement('script');
 jsDemoImagesTransform.type = 'text/javascript';
@@ -115,22 +116,60 @@ function App() {
             var input = document.createElement('input');
             input.setAttribute('type', 'file');
             input.setAttribute('accept', 'audio/*');
-            input.onchange = function() {
+            input.onchange = function () {
               var file = this.files[0];
-              var reader = new FileReader();
-              reader.onload = function () {
-                var blobCache = window.tinymce.activeEditor.editorUpload.blobCache;
-                var blobInfo = blobCache.create(file.name, file, reader.result);
-                callback(blobInfo.blobUri(), { title: file.name });
+              const reader = new FileReader();
+              reader.readAsArrayBuffer(file);
+
+              reader.onload = () => {
+                const data = reader.result;
+
+                axios.post('https://eastus.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US', data, {
+                  headers: {
+                    "Ocp-Apim-Subscription-Key": "8d518c7b84be47e18735490f6239a6e8",
+                    "Content-Type": "audio/wav"
+                  }
+                })
+                  .then(response => {
+                    console.log(response.data.DisplayText);
+                    window.tinymce.activeEditor.insertContent(response.data.DisplayText);
+                  })
+                  .catch(error => {
+                    console.log(error);
+                  });
               };
-              reader.readAsDataURL(file);
             };
             input.click();
-          }     
-        
+          }
+
         }}
       />
+
       <button onClick={log}>Log editor content</button>
+      <input type="file" onChange={(e) => {
+        const file = e.target.files[0];
+
+        const reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+
+        reader.onload = () => {
+          const data = reader.result;
+
+          axios.post('https://eastus.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=en-US', data, {
+            headers: {
+              "Ocp-Apim-Subscription-Key": "8d518c7b84be47e18735490f6239a6e8",
+              "Content-Type": "audio/wav"
+            }
+          })
+            .then(response => {
+              console.log(response);
+              window.tinymce.activeEditor.insertContent(response.data.DisplayText);
+            })
+            .catch(error => {
+              console.log(error);
+            });
+        };
+      }} />
     </>
   );
 }
