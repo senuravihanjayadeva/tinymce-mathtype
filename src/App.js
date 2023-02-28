@@ -99,12 +99,35 @@ function App() {
             'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
             'insertdatetime', 'media', 'table', 'code', 'help', 'wordcount', 'example'
           ],
-          toolbar: 'undo redo | blocks | ' +
+          toolbar: 'media undo redo | blocks | ' +
             'bold italic forecolor | alignleft aligncenter ' +
             'alignright alignjustify | bullist numlist outdent indent | ' +
             'removeformat | help | ' + 'tiny_mce_wiris_formulaEditor tiny_mce_wiris_formulaEditorChemistry example',
           content_style: 'body { font-family:Helvetica,Arial,sans-serif; font-size:14px }',
           extended_valid_elements: '*[.*]',
+          media_live_embeds: true,
+          file_picker_types: 'media',
+          file_picker_callback: function (callback, value, meta) {
+            // Open a file picker dialog
+            // and call the callback with the selected file
+            // when the user has made a selection
+            // For example, using the input element with type "file"
+            var input = document.createElement('input');
+            input.setAttribute('type', 'file');
+            input.setAttribute('accept', 'audio/*');
+            input.onchange = function() {
+              var file = this.files[0];
+              var reader = new FileReader();
+              reader.onload = function () {
+                var blobCache = window.tinymce.activeEditor.editorUpload.blobCache;
+                var blobInfo = blobCache.create(file.name, file, reader.result);
+                callback(blobInfo.blobUri(), { title: file.name });
+              };
+              reader.readAsDataURL(file);
+            };
+            input.click();
+          }     
+        
         }}
       />
       <button onClick={log}>Log editor content</button>
